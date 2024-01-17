@@ -42,6 +42,7 @@ func _physics_process(delta):
 	# Handle jump.
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
+		%JumpSound.play();
 		State.IsJumping = true;
 
 	#Get an axis dirived from the input map.
@@ -76,25 +77,22 @@ func _physics_process(delta):
 		State.jump_speed = velocity.x;
 	#If you are moving in the air.
 	elif xinput && !is_on_floor():
-		#If you are holding forward
+		#If you are holding forward.
 		if xinput == sign(velocity.x) || velocity.x == 0:
-			#If you are under walking speed?
 			if abs(velocity.x) < WALK_SPEED:
-				#Use your walk acceleration
-				velocity.x += WALK_ACCEL;
+				velocity.x += WALK_ACCEL*xinput;
 			else:
-				#Otherwise use your running acceleration.
-				velocity.x += RUN_ACCEL;
-			if State.jump_speed <= WALK_SPEED:
-				if velocity.x > WALK_SPEED: velocity.x = WALK_SPEED;
+				velocity.x += RUN_ACCEL*xinput;
+			if abs(State.jump_speed) <= WALK_SPEED:
+				if abs(velocity.x) > WALK_SPEED: velocity.x = WALK_SPEED*sign(velocity.x);
 			else:
-				if velocity.x > RUN_SPEED: velocity.x = RUN_SPEED;
+				if abs(velocity.x) > RUN_SPEED: velocity.x = RUN_SPEED*sign(velocity.x);
 		#If you are holding backwards.
 		else:
-			if velocity.x >= WALK_SPEED:
+			if abs(velocity.x) >= WALK_SPEED:
 				velocity.x += RUN_ACCEL*xinput;
-			elif State.jump_speed >= JUMP_TURN:
-				velocity.x += LEVEL_ENTRY*xinput;
+			elif abs(State.jump_speed) >= JUMP_TURN:
+				velocity.x += STOP_ACCEL*xinput;
 			else:
 				velocity.x += WALK_ACCEL*xinput;
 	elif is_on_floor():

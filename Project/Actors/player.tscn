@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://brpnuk26s7usk"]
+[gd_scene load_steps=13 format=3 uid="uid://brpnuk26s7usk"]
 
 [ext_resource type="Script" path="res://Actors/player.gd" id="1_nb1jr"]
 [ext_resource type="Texture2D" uid="uid://bnmjla5xx5o14" path="res://Sprites/mario/die.png" id="2_2mxyc"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://clseqfs6lcj64" path="res://Sprites/mario/jump.png" id="4_qq2ta"]
 [ext_resource type="Texture2D" uid="uid://dkbxqtsb4s7u1" path="res://Sprites/mario/run/run3.png" id="5_80u7q"]
 [ext_resource type="Texture2D" uid="uid://ht32e1hfvaje" path="res://Sprites/mario/turn.png" id="8_7gu1f"]
+[ext_resource type="AudioStream" uid="uid://bu5dy877jvhqo" path="res://Sounds/sfx/Jump.wav" id="10_pcei6"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_44fed"]
 animations = [{
@@ -78,3 +79,9 @@ shape = SubResource("RectangleShape2D_qgnw0")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 script = ExtResource("3_kv74t")
+
+[node name="Sounds" type="Node2D" parent="."]
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="Sounds"]
+unique_name_in_owner = true
+stream = ExtResource("10_pcei6")
