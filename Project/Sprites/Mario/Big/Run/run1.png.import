@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bnmjla5xx5o14"
-path="res://.godot/imported/die.png-dc5011ab96763695265c11d4372be605.ctex"
+uid="uid://ddgrsopivnoev"
+path="res://.godot/imported/run1.png-b5cd0ce6de22512abfbdaf667b4a2e9a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/Mario/die.png"
-dest_files=["res://.godot/imported/die.png-dc5011ab96763695265c11d4372be605.ctex"]
+source_file="res://Sprites/Mario/Big/Run/run1.png"
+dest_files=["res://.godot/imported/run1.png-b5cd0ce6de22512abfbdaf667b4a2e9a.ctex"]
 
 [params]
 

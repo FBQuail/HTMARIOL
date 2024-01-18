@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ht32e1hfvaje"
-path="res://.godot/imported/turn.png-5395781d71701f63fade4c011a871a4f.ctex"
+uid="uid://c1x0xggol8f6k"
+path="res://.godot/imported/run2.png-149a9ab6a530224ae16de840d3dc85fd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprites/mario/turn.png"
-dest_files=["res://.godot/imported/turn.png-5395781d71701f63fade4c011a871a4f.ctex"]
+source_file="res://Sprites/Mario/Big/Run/run2.png"
+dest_files=["res://.godot/imported/run2.png-149a9ab6a530224ae16de840d3dc85fd.ctex"]
 
 [params]
 
