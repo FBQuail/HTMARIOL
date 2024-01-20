@@ -57,18 +57,31 @@ var State = {
 	IsCrouching = false,
 	JumpLetGo = false,
 	power = 0,
+	block_type = 0,
+	block_item = 0,
 	coin = 0,
-	sprite = %SpriteSmall,
 	direction = 1,
 	#The speed you were traveling at when you jump, updated every frame when you're on the ground, otherwise is kept the same.
 	jump_speed = 0,
 	jump_height = 0,
 }
 
+var Sprite = {
+	sprite = %SpriteSmall,
+	anim = 'idle',
+	anim_speed = 1,
+}
+
 #Used for frame counters.
 var Counters = {
 	run_stop = 0,
 	floor_time = 0,
+}
+
+#Used so that powerups can play a sound even though they get deleted on the same frame they're picked up. The powerup sets one of these to true which will play a sound, then set itself to false.
+var Sounds = {
+	powerup = false,
+	oneup = false,
 }
 #Sets the gravity to it's default value on play initilize.
 var gravity = DEFAULT_GRAV;
@@ -127,7 +140,7 @@ func _physics_process(delta):
 	#Creates a variable that tracks if the player is holding the run button.
 	var rinput = Input.is_action_pressed("run");
 	#Check if the player is pressing any horizontal input.
-	if xinput && is_on_floor():
+	if xinput && is_on_floor() && State.IsCrouching == false:
 		#Check if you're not turning.
 		if xinput == sign(velocity.x) || velocity.x == 0:
 			if !rinput && Counters.run_stop == 0:
@@ -188,13 +201,16 @@ func _physics_process(delta):
 			else:		
 				if abs(velocity.x) > SKID_ACCEL: velocity.x += SKID_ACCEL*-sign(velocity.x);
 				else: velocity.x = 0;
-		#If you press down while not pressing anything crouch.
-		if Input.is_action_pressed('down') && State.power > 0:
-			State.IsCrouching = true;
-		else: State.IsCrouching = false;
+		else:
+			State.IsSkidding = false;
+		
+	#If you press down while not pressing anything crouch.
+	if Input.is_action_pressed('down'):
+		State.IsCrouching = true;
+	else: State.IsCrouching = false;
 		
 	#if you press left or were holding left and just land, while on the floor, flip the direction of the player so they turn around.
-	if ((Input.is_action_just_pressed("left") || Input.is_action_pressed("left") && Counters.floor_time == 1) && State.direction == 1 || (Input.is_action_just_pressed("right") || Input.is_action_pressed("right") && Counters.floor_time == 1) && State.direction == -1) && is_on_floor():
+	if ((xinput == -1 || xinput == -1 && Counters.floor_time == 1) && State.direction == 1 || (xinput == 1 || xinput == 1 && Counters.floor_time == 1) && State.direction == -1) && is_on_floor() && State.IsCrouching == false:
 		scale.x = -9;
 		State.direction *= -1;
 	
@@ -202,49 +218,100 @@ func _physics_process(delta):
 		Counters.run_stop -= 1;
 		
 	if is_on_ceiling():
+		#Gets the tile map from the last slide collision.
 		var tile_map = get_slide_collision(get_slide_collision_count() - 1).get_collider();
+		#If the player is small check 16 tiles above them, otherwise check 32 above them to account for their extra height.
 		var cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
-		var data = tile_map.get_cell_tile_data(0, cell)
-		if data:
-			var type = data.get_custom_data("Type")
-			print(type);
+		if State.power == 0:
+			cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
 		else:
-			var type = 0;
-			print(type);
+			cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 32))
+		#Gets the data at the tile right above the player.
+		var data = tile_map.get_cell_tile_data(0, cell)
+		#If the data is valid, retrieve what type of block it is (ground, ? block, brick block) and save it to the player state.
+		if data:
+			State.block_type = data.get_custom_data("Type")
+		else:
+			#If it is invalid just set it to the default of 0 (ground)
+			State.block_type = 0;
+		#If the player hits a questionmark block.
+		if State.block_type == 1:
+			if State.block_item == 0: %CoinSound.play();
+			else: 
+				%ItemSound.play();
+				
+	
+			#Checks which tile is being used, and will set the "empty" tile accordingly based on the atlas coords.
+			#Overworld
+			if tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 4):
+				tile_map.set_cell(0, cell, 0, Vector2(3, 0));
+			#Underground
+			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 5):
+				tile_map.set_cell(0, cell, 0, Vector2(3, 1))
+			#Underwater
+			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 6):
+				tile_map.set_cell(0, cell, 0, Vector2(3, 2));
+			#Castle
+			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 7):
+				tile_map.set_cell(0, cell, 0, Vector2(3, 3))
+		#If the player isn't small and hits a brick block, destroy it.
+		elif State.block_type == 2 && State.power > 0:
+			tile_map.erase_cell(0, cell);
+			%BreakSound.play();
+		else:
+			%BumpSound.play();
+		print(State.block_type);
 		
 	#Changes the sprite that's visible and playing animations depending on the player's powerup level.
-	if State.power == 0:
-		State.sprite = %SpriteSmall;
+	if State.power == 0: 
+		Sprite.sprite = %SpriteSmall;
 		%SpriteSmall.visible = true;
 		%SpriteBig.visible = false;
 		
 		%SmallHitbox.disabled = false;
 		%BigHitbox.disabled = true;
 		%CrouchHitBox.disabled = true;
-	elif State.power == 1:
-		State.sprite = %SpriteBig;
+	else:
+		Sprite.sprite = %SpriteBig;
 		%SpriteSmall.visible = false;
 		%SpriteBig.visible = true;
 		
 		%SmallHitbox.disabled = true;
-		if State.IsCrouching == false:
+		if Sprite.anim != "crouch": 
 			%BigHitbox.disabled = false;
 			%CrouchHitBox.disabled = true;
-		else:
+		else: 
 			%BigHitbox.disabled = true;
 			%CrouchHitBox.disabled = false;
+
+	
 	if is_on_floor():
-		if velocity.x != 0:
-			if State.IsSkidding == false: State.sprite.play("run", velocity.x/900);
-			else: State.sprite.play("turn");
+		if velocity.x != 0 && State.IsSkidding == false && Sprite.anim != "crouch":
+			Sprite.anim = "run";
+		elif State.IsSkidding == true:
+			Sprite.anim = "turn";
 		else:
-			if State.IsCrouching == false: State.sprite.play("idle");
-			else: State.sprite.play("crouch");
+			Sprite.anim = "idle";
+			
+		if !xinput && State.IsCrouching == true && State.power > 0:
+			Sprite.anim = "crouch";
+		Sprite.anim_speed = 1;
 	else:
 		if State.IsJumping == true:
-			State.sprite.play("jump");
+			Sprite.anim = "jump";
+			Sprite.anim_speed = 1;
 		else:
-			State.sprite.play("run", 0);
-			State.sprite.frame = 0;
+			Sprite.anim = "run";
+			Sprite.anim_speed = 0;
+			Sprite.sprite.set_frame_and_progress(2, 0);
+	
+	Sprite.sprite.play(Sprite.anim, Sprite.anim_speed);
+	
+	if Sounds.powerup == true:
+		%PowerSound.play();
+		Sounds.powerup = false;
+	if Sounds.oneup == true:
+		%OneupSound.play();
+		Sounds.oneup = false;
 	
 	move_and_slide()
