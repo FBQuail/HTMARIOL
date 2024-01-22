@@ -29,7 +29,6 @@ func _process(delta):
 
 
 func _on_area_body_entered(body):
-	print(body.State.power);
 	#Makes the player play the 1up sound.
 	body.Sounds.oneup = true;
 	queue_free();

@@ -16,8 +16,14 @@ func _process(delta):
 
 
 func _on_area_body_entered(body):
-	body.State.block_item = item;
-	print(body.State.block_item)
+	#Sets the block that the player will get from the next block they hit to the item set in this node.
+	#0 for coin, 1 for scaling powerup, 2 for mushroom, 3 for fireflower, 4 for star, 5 for 1up, 6 for timer coin blocks.
+	if 1 == 1:
+		body.State.block_item = item;
+		body.State.block = self;
+		print(position)
+		print(body.Tile_Collision.cell)
+	
 
 func _on_area_body_exited(body):
 	body.State.block_item = 0;

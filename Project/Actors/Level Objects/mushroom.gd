@@ -29,8 +29,7 @@ func _process(delta):
 
 
 func _on_area_body_entered(body):
-	print(body.State.power);
-	body.State.power += 1;
+	if body.State.power < 1: body.State.power += 1;
 	#Makes the player play the powerup sound.
 	body.Sounds.powerup = true;
 	queue_free();

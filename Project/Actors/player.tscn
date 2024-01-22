@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://brpnuk26s7usk"]
+[gd_scene load_steps=50 format=3 uid="uid://brpnuk26s7usk"]
 
 [ext_resource type="Script" path="res://Actors/player.gd" id="1_nb1jr"]
 [ext_resource type="Texture2D" uid="uid://bnmjla5xx5o14" path="res://Sprites/Mario/die.png" id="2_2mxyc"]
@@ -12,9 +12,16 @@
 [ext_resource type="Texture2D" uid="uid://c51di0pxgdmhm" path="res://Sprites/Mario/Big/crouch.png" id="10_s7aro"]
 [ext_resource type="Texture2D" uid="uid://cx8s4gmysq1wd" path="res://Sprites/Mario/Big/Idle.png" id="11_kmd2p"]
 [ext_resource type="Texture2D" uid="uid://bijir1trjpsd5" path="res://Sprites/Mario/Big/jump.png" id="12_gfvj4"]
+[ext_resource type="Texture2D" uid="uid://n4dexj17x7td" path="res://Sprites/Mario/Fire/crouch.png" id="12_mhagt"]
+[ext_resource type="Texture2D" uid="uid://c5kq5yqgkajvq" path="res://Sprites/Mario/Fire/idle.png" id="13_75xw6"]
+[ext_resource type="Texture2D" uid="uid://o3dshrf350hn" path="res://Sprites/Mario/Fire/jump.png" id="14_bf8yj"]
+[ext_resource type="Texture2D" uid="uid://bwipnlgis72jf" path="res://Sprites/Mario/Fire/run.png" id="15_feera"]
+[ext_resource type="Texture2D" uid="uid://ich6d1qetn1l" path="res://Sprites/Mario/Fire/swim.png" id="16_8pn83"]
 [ext_resource type="Texture2D" uid="uid://c51uc1hfewtfm" path="res://Sprites/Mario/Big/turn.png" id="16_t1wjr"]
+[ext_resource type="Texture2D" uid="uid://6dvbhfwammft" path="res://Sprites/Mario/Fire/turn.png" id="17_i0y26"]
 [ext_resource type="AudioStream" uid="uid://cqprk6ffnntgb" path="res://Sounds/sfx/Item.wav" id="18_3jn03"]
 [ext_resource type="AudioStream" uid="uid://cwrdvutyajf04" path="res://Sounds/sfx/Powerup.wav" id="18_h33na"]
+[ext_resource type="Texture2D" uid="uid://cm2a4pa8bqssf" path="res://Sprites/Mario/Fire/vine.png" id="18_pyt6m"]
 [ext_resource type="AudioStream" uid="uid://qrtp86tegcx8" path="res://Sounds/sfx/Break.wav" id="19_21lx7"]
 [ext_resource type="AudioStream" uid="uid://b0yebfvb3auvf" path="res://Sounds/sfx/1up.wav" id="19_wdwca"]
 [ext_resource type="AudioStream" uid="uid://kw6dgw2sccoj" path="res://Sounds/sfx/Bump.wav" id="20_r3y5j"]
@@ -142,6 +149,133 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_0g4fp"]
+atlas = ExtResource("15_feera")
+region = Rect2(0, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hsihh"]
+atlas = ExtResource("15_feera")
+region = Rect2(18, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wwupb"]
+atlas = ExtResource("15_feera")
+region = Rect2(36, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eh0iy"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(0, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1lgqw"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(18, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ew6ve"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(36, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u6x2u"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(54, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4wokt"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(72, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sdh4y"]
+atlas = ExtResource("16_8pn83")
+region = Rect2(90, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_exra3"]
+atlas = ExtResource("18_pyt6m")
+region = Rect2(0, 0, 16, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bx8nj"]
+atlas = ExtResource("18_pyt6m")
+region = Rect2(18, 0, 16, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ka6dg"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("12_mhagt")
+}],
+"loop": true,
+"name": &"crouch",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("13_75xw6")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("14_bf8yj")
+}],
+"loop": true,
+"name": &"jump",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0g4fp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hsihh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wwupb")
+}],
+"loop": true,
+"name": &"run",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eh0iy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1lgqw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ew6ve")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u6x2u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4wokt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sdh4y")
+}],
+"loop": true,
+"name": &"swim",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("17_i0y26")
+}],
+"loop": true,
+"name": &"turn",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_exra3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bx8nj")
+}],
+"loop": true,
+"name": &"vine",
+"speed": 5.0
+}]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qgnw0"]
 size = Vector2(10, 12)
 
@@ -168,7 +302,14 @@ unique_name_in_owner = true
 visible = false
 position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_mfbne")
-animation = &"run"
+animation = &"idle"
+
+[node name="SpriteFire" type="AnimatedSprite2D" parent="Sprites"]
+unique_name_in_owner = true
+visible = false
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_ka6dg")
+animation = &"idle"
 
 [node name="SmallHitbox" type="CollisionShape2D" parent="."]
 unique_name_in_owner = true

@@ -51,12 +51,14 @@ const SPEED_CAP = (4*PIXEL + 8*SPIXEL)*9*60;
 
 #Used to keep track of the player's current state (their actions, power up, and other important values)
 var State = {
+	level = self,
 	IsJumping = false,
 	IsSkidding = false,
 	IsRunning = false,
 	IsCrouching = false,
 	JumpLetGo = false,
 	power = 0,
+	block = self,
 	block_type = 0,
 	block_item = 0,
 	coin = 0,
@@ -78,11 +80,20 @@ var Counters = {
 	floor_time = 0,
 }
 
+#Used to store data related to hitting blocks.
+var Tile_Collision = {
+	tile_map = null,
+	cell = Vector2(0, 0),
+	data = null,
+	check = -1,
+}
 #Used so that powerups can play a sound even though they get deleted on the same frame they're picked up. The powerup sets one of these to true which will play a sound, then set itself to false.
 var Sounds = {
 	powerup = false,
 	oneup = false,
+	coin = false,
 }
+
 #Sets the gravity to it's default value on play initilize.
 var gravity = DEFAULT_GRAV;
 
@@ -219,64 +230,150 @@ func _physics_process(delta):
 		
 	if is_on_ceiling():
 		#Gets the tile map from the last slide collision.
-		var tile_map = get_slide_collision(get_slide_collision_count() - 1).get_collider();
+		Tile_Collision.tile_map = get_slide_collision(get_slide_collision_count() - 1).get_collider();
 		#If the player is small check 16 tiles above them, otherwise check 32 above them to account for their extra height.
-		var cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
+		Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
+		
+		Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Tile_Collision.cell);
+		
 		if State.power == 0:
-			cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
+			#If the block that the player is hitting is valid.
+			if Tile_Collision.check != -1:
+				Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
+			#If the block is invalid, check 16 pixels ahead of them.
+			else:
+				Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Vector2(Tile_Collision.cell.x + 16*9, Tile_Collision.cell.y));
+				if Tile_Collision.check != -1:
+					Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9 + 16*9, position.y/9 - 16))
+				#If the tile in front of them is ALSO invalid, check behind them.
+				else:
+					Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Vector2(Tile_Collision.cell.x - 16*9, Tile_Collision.cell.y));
+					Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9 - 16*9, position.y/9 - 16))
+					
+			print(Tile_Collision.tile_map.get_cell_source_id(0, Tile_Collision.tile_map.local_to_map(Vector2i(position.x + 16/9, position.y/9 - 16))))
+
 		else:
-			cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 32))
+			Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 32))
 		#Gets the data at the tile right above the player.
-		var data = tile_map.get_cell_tile_data(0, cell)
+		Tile_Collision.data = Tile_Collision.tile_map.get_cell_tile_data(0, Tile_Collision.cell)
+		var palette = 0
 		#If the data is valid, retrieve what type of block it is (ground, ? block, brick block) and save it to the player state.
-		if data:
-			State.block_type = data.get_custom_data("Type")
+		if Tile_Collision.data:
+			State.block_type = Tile_Collision.data.get_custom_data("Type")
+			palette = Tile_Collision.data.get_custom_data("Palette")
 		else:
 			#If it is invalid just set it to the default of 0 (ground)
 			State.block_type = 0;
 		#If the player hits a questionmark block.
-		if State.block_type == 1:
-			if State.block_item == 0: %CoinSound.play();
+		if State.block_type == 1 && Tile_Collision.tile_map.name == "Blocks":
+			if State.block_item == 0: 
+				%CoinSound.play();
+				State.coin += 1;
 			else: 
-				%ItemSound.play();
+				#Default the item to a mushroom.
+				var path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
+				#Checks the item assigned to the current block the player is hitting.
+				#1 for scaling powerup.
+				if State.block_item == 1:
+					if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
+					else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#2 for mushroom.
+				elif State.block_item == 2: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
+				#3 for fire flower.
+				elif State.block_item == 3: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#4 for star.
+				elif State.block_item == 4: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#5 for 1up.
+				elif State.block_item == 5: path = preload('res://Actors/Level Objects/1up.tscn').instantiate();
+				#Creates an item node that's a child of the main level.
+				get_parent().add_child(path);
 				
+				var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
+				path.position = coord;
+				%ItemSound.play();
 	
 			#Checks which tile is being used, and will set the "empty" tile accordingly based on the atlas coords.
 			#Overworld
-			if tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 4):
-				tile_map.set_cell(0, cell, 0, Vector2(3, 0));
+			if palette == 0:
+				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 0));
 			#Underground
-			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 5):
-				tile_map.set_cell(0, cell, 0, Vector2(3, 1))
+			elif palette == 1:
+				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 1))
 			#Underwater
-			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 6):
-				tile_map.set_cell(0, cell, 0, Vector2(3, 2));
+			elif palette == 2:
+				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 2));
 			#Castle
-			elif tile_map.get_cell_atlas_coords(0, cell) == Vector2i(0, 7):
-				tile_map.set_cell(0, cell, 0, Vector2(3, 3))
-		#If the player isn't small and hits a brick block, destroy it.
-		elif State.block_type == 2 && State.power > 0:
-			tile_map.erase_cell(0, cell);
-			%BreakSound.play();
-		else:
-			%BumpSound.play();
-		print(State.block_type);
+			elif palette == 3:
+				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 3))
+		#Brick blocks.
+		elif State.block_type == 1 && Tile_Collision.tile_map.name == 'Tiles':
+			#Default the item to a mushroom.
+			var path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
+			#If it's a normal brick block.
+			if State.block_item == 0:
+				#If the player isn't small and hits a brick block, destroy it.
+				if State.power > 0:
+					Tile_Collision.tile_map.erase_cell(0, Tile_Collision.cell);
+					%BreakSound.play();
+				else: %BumpSound.play();
+			#If it is a brick block with an item.
+			else:
+				#If it is a scaling powerup.
+				if State.block_item == 1:
+					print('a')
+					if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
+					else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#If it is a mushroom.
+				elif State.block_item == 2: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
+				#If is a fireflower.
+				elif State.block_item == 3: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#If it is a star.
+				elif State.block_item == 4: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+				#If it is a 1up.
+				elif State.block_item == 5: path = preload('res://Actors/Level Objects/1up.tscn').instantiate();6
+				get_parent().add_child(path);
+				var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
+				path.position = coord;
+				%ItemSound.play();
+				#Checks which tile is being used, and will set the "empty" tile accordingly based on the atlas coords.
+				#Overworld
+
 		
 	#Changes the sprite that's visible and playing animations depending on the player's powerup level.
+	#Small
+	if get_slide_collision_count() - 1 > 0:
+		if get_slide_collision(get_slide_collision_count() - 1).get_collider().name == "BlocksCoins": print('a')
 	if State.power == 0: 
+		#Sets the sprite to play animations from to the small sprite, and disables the other sprite's visibility.
 		Sprite.sprite = %SpriteSmall;
 		%SpriteSmall.visible = true;
 		%SpriteBig.visible = false;
+		%SpriteFire.visible = false;
 		
+		#Enables the small hitbox and disables all others.
 		%SmallHitbox.disabled = false;
 		%BigHitbox.disabled = true;
 		%CrouchHitBox.disabled = true;
+	#Big/fire flower
 	else:
-		Sprite.sprite = %SpriteBig;
-		%SpriteSmall.visible = false;
-		%SpriteBig.visible = true;
+		#Checks if mario is big.
+		if State.power == 1:
+			#Sets the sprite to the big sprite and disables the visibilies of the others.
+			Sprite.sprite = %SpriteBig;
+			%SpriteSmall.visible = false;
+			%SpriteBig.visible = true;
+			%SpriteFire.visible = false;
+		#Checks if mario is instead in his fire form.
+		else:
+			#Sets the sprite to the fire sprite and disables the visibilites of the others.
+			Sprite.sprite = %SpriteFire;
+			%SpriteSmall.visible = false;
+			%SpriteBig.visible = false;
+			%SpriteFire.visible = true;
 		
+		#Disables the small hitbox.
 		%SmallHitbox.disabled = true;
+		#If the player is crouching use the crouch hitbox, otherwise use the normal big hitbox.
 		if Sprite.anim != "crouch": 
 			%BigHitbox.disabled = false;
 			%CrouchHitBox.disabled = true;
@@ -313,5 +410,8 @@ func _physics_process(delta):
 	if Sounds.oneup == true:
 		%OneupSound.play();
 		Sounds.oneup = false;
+	if Sounds.coin == true:
+		%CoinSound.play();
+		Sounds.coin = false;
 	
 	move_and_slide()
