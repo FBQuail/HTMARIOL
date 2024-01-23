@@ -21,8 +21,6 @@ func _on_area_body_entered(body):
 	if 1 == 1:
 		body.State.block_item = item;
 		body.State.block = self;
-		print(position)
-		print(body.Tile_Collision.cell)
 	
 
 func _on_area_body_exited(body):

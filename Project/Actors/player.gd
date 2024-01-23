@@ -68,9 +68,13 @@ var State = {
 	jump_height = 0,
 }
 
+#Variables related to the player's sprite.
 var Sprite = {
+	#What sprite node to use.
 	sprite = %SpriteSmall,
+	#What sub-animation to play from the sprite.
 	anim = 'idle',
+	#The speed (multiplitive) to play the animation.
 	anim_speed = 1,
 }
 
@@ -82,10 +86,11 @@ var Counters = {
 
 #Used to store data related to hitting blocks.
 var Tile_Collision = {
+	#The tile map node the player collidied with.
 	tile_map = null,
+	#The coordinates of the cell that the player hit.
 	cell = Vector2(0, 0),
 	data = null,
-	check = -1,
 }
 #Used so that powerups can play a sound even though they get deleted on the same frame they're picked up. The powerup sets one of these to true which will play a sound, then set itself to false.
 var Sounds = {
@@ -237,23 +242,11 @@ func _physics_process(delta):
 		Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Tile_Collision.cell);
 		
 		if State.power == 0:
-			#If the block that the player is hitting is valid.
-			if Tile_Collision.check != -1:
-				Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
-			#If the block is invalid, check 16 pixels ahead of them.
-			else:
-				Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Vector2(Tile_Collision.cell.x + 16*9, Tile_Collision.cell.y));
-				if Tile_Collision.check != -1:
-					Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9 + 16*9, position.y/9 - 16))
-				#If the tile in front of them is ALSO invalid, check behind them.
-				else:
-					Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Vector2(Tile_Collision.cell.x - 16*9, Tile_Collision.cell.y));
-					Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9 - 16*9, position.y/9 - 16))
-					
-			print(Tile_Collision.tile_map.get_cell_source_id(0, Tile_Collision.tile_map.local_to_map(Vector2i(position.x + 16/9, position.y/9 - 16))))
-
+			#Get the cell of the block to hit.
+			#Checks the blocks to the left and right to the player so they can hit "edges" without it not doing anything.
+			check_adjacent_blocks(16);
 		else:
-			Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 32))
+			check_adjacent_blocks(32);
 		#Gets the data at the tile right above the player.
 		Tile_Collision.data = Tile_Collision.tile_map.get_cell_tile_data(0, Tile_Collision.cell)
 		var palette = 0
@@ -320,7 +313,6 @@ func _physics_process(delta):
 			else:
 				#If it is a scaling powerup.
 				if State.block_item == 1:
-					print('a')
 					if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
 					else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
 				#If it is a mushroom.
@@ -341,8 +333,6 @@ func _physics_process(delta):
 		
 	#Changes the sprite that's visible and playing animations depending on the player's powerup level.
 	#Small
-	if get_slide_collision_count() - 1 > 0:
-		if get_slide_collision(get_slide_collision_count() - 1).get_collider().name == "BlocksCoins": print('a')
 	if State.power == 0: 
 		#Sets the sprite to play animations from to the small sprite, and disables the other sprite's visibility.
 		Sprite.sprite = %SpriteSmall;
@@ -415,3 +405,29 @@ func _physics_process(delta):
 		Sounds.coin = false;
 	
 	move_and_slide()
+
+
+func check_adjacent_blocks(height) -> void:
+	var cell = Tile_Collision.cell
+	var tile_map = Tile_Collision.tile_map;
+	var check = -1;
+	
+	#Defaults the cell to right above you.
+	cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - height))
+	#Gets the atlas index of the cell above you.
+	check = tile_map.get_cell_atlas_coords(0, cell).x;
+	#If it is valid (not -1) save the new cell to the one above you.
+	if check != -1:
+		cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - height*16));
+	else:
+		#If it is invalid check the cell one tile to the left.
+		check = tile_map.get_cell_atlas_coords(0, Vector2i(cell.x - 1, cell.y)).x;
+		#If that is valid, save it as the cell to use.
+		if check != -1:
+			cell = tile_map.local_to_map(Vector2i(position.x/9 - 16, position.y/9 - height));
+		else:
+			#Otherwise use the cell on the right.
+			cell = tile_map.local_to_map(Vector2i(position.x/9 + 16, position.y/9 - height));
+			
+	#Save the new cell.
+	Tile_Collision.cell = cell;
