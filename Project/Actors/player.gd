@@ -418,7 +418,7 @@ func check_adjacent_blocks(height) -> void:
 	check = tile_map.get_cell_atlas_coords(0, cell).x;
 	#If it is valid (not -1) save the new cell to the one above you.
 	if check != -1:
-		cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - height*16));
+		cell = tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - height));
 	else:
 		#If it is invalid check the cell one tile to the left.
 		check = tile_map.get_cell_atlas_coords(0, Vector2i(cell.x - 1, cell.y)).x;
@@ -429,5 +429,7 @@ func check_adjacent_blocks(height) -> void:
 			#Otherwise use the cell on the right.
 			cell = tile_map.local_to_map(Vector2i(position.x/9 + 16, position.y/9 - height));
 			
-	#Save the new cell.
+	print(cell.x + 1)
+
 	Tile_Collision.cell = cell;
+	Tile_Collision.tile_map = tile_map;
