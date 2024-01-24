@@ -15,8 +15,9 @@ var Counters = {
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	velocity.x = 0.78125*9*60*State.direction;
-	if !is_on_floor(): velocity.y = 1.5625*9*60;
+	#The speed of a mushroom is the same as the walk speed of mario.
+	velocity.x = (1 + 9*0.0625)*9*60*State.direction;
+	if !is_on_floor(): velocity.y = (1 + 9*0.0625)*9*60;
 	move_and_slide();
 	if is_on_wall():
 		if Counters.wall_time == 0:

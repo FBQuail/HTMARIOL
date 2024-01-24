@@ -91,6 +91,8 @@ var Tile_Collision = {
 	#The coordinates of the cell that the player hit.
 	cell = Vector2(0, 0),
 	data = null,
+	#This kind of doesn't belong here, but upon colliding with a block item the block item will save it's ID in the player node so the player node can send it the block they collidied with.
+	block_item = null,
 }
 #Used so that powerups can play a sound even though they get deleted on the same frame they're picked up. The powerup sets one of these to true which will play a sound, then set itself to false.
 var Sounds = {
@@ -239,7 +241,6 @@ func _physics_process(delta):
 		#If the player is small check 16 tiles above them, otherwise check 32 above them to account for their extra height.
 		Tile_Collision.cell = Tile_Collision.tile_map.local_to_map(Vector2i(position.x/9, position.y/9 - 16))
 		
-		Tile_Collision.check = Tile_Collision.tile_map.get_cell_source_id(0, Tile_Collision.cell);
 		
 		if State.power == 0:
 			#Get the cell of the block to hit.
@@ -263,45 +264,13 @@ func _physics_process(delta):
 				%CoinSound.play();
 				State.coin += 1;
 			else: 
-				#Default the item to a mushroom.
-				var path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
-				#Checks the item assigned to the current block the player is hitting.
-				#1 for scaling powerup.
-				if State.block_item == 1:
-					if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
-					else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#2 for mushroom.
-				elif State.block_item == 2: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
-				#3 for fire flower.
-				elif State.block_item == 3: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#4 for star.
-				elif State.block_item == 4: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#5 for 1up.
-				elif State.block_item == 5: path = preload('res://Actors/Level Objects/1up.tscn').instantiate();
-				#Creates an item node that's a child of the main level.
-				get_parent().add_child(path);
-				
-				var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
-				path.position = coord;
-				%ItemSound.play();
-	
-			#Checks which tile is being used, and will set the "empty" tile accordingly based on the atlas coords.
-			#Overworld
-			if palette == 0:
-				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 0));
-			#Underground
-			elif palette == 1:
-				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 1))
-			#Underwater
-			elif palette == 2:
-				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 2));
-			#Castle
-			elif palette == 3:
-				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, 3))
+				#Spawns an item.
+				spawn_item();
+			
+			#Sets the tile to an empty block.
+			Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, 0, Vector2(16, palette), 0)
 		#Brick blocks.
 		elif State.block_type == 1 && Tile_Collision.tile_map.name == 'Tiles':
-			#Default the item to a mushroom.
-			var path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
 			#If it's a normal brick block.
 			if State.block_item == 0:
 				#If the player isn't small and hits a brick block, destroy it.
@@ -311,24 +280,9 @@ func _physics_process(delta):
 				else: %BumpSound.play();
 			#If it is a brick block with an item.
 			else:
-				#If it is a scaling powerup.
-				if State.block_item == 1:
-					if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
-					else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#If it is a mushroom.
-				elif State.block_item == 2: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
-				#If is a fireflower.
-				elif State.block_item == 3: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#If it is a star.
-				elif State.block_item == 4: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
-				#If it is a 1up.
-				elif State.block_item == 5: path = preload('res://Actors/Level Objects/1up.tscn').instantiate();6
-				get_parent().add_child(path);
-				var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
-				path.position = coord;
-				%ItemSound.play();
-				#Checks which tile is being used, and will set the "empty" tile accordingly based on the atlas coords.
-				#Overworld
+				spawn_item();
+				#Sets the tile to an empty block.
+				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, Tile_Collision.tile_map.tile_set.get_source_id(0), Vector2(8, palette), 0)
 
 		
 	#Changes the sprite that's visible and playing animations depending on the player's powerup level.
@@ -429,7 +383,30 @@ func check_adjacent_blocks(height) -> void:
 			#Otherwise use the cell on the right.
 			cell = tile_map.local_to_map(Vector2i(position.x/9 + 16, position.y/9 - height));
 			
-	print(cell.x + 1)
 
 	Tile_Collision.cell = cell;
 	Tile_Collision.tile_map = tile_map;
+	
+func spawn_item() -> void:
+	#Default the item to a mushroom.
+	var path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate()
+	#Checks the item assigned to the current block the player is hitting.
+	#1 for scaling powerup.
+	if State.block_item == 1:
+		if State.power == 0: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
+		else: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+	#2 for mushroom.
+	elif State.block_item == 2: path = preload('res://Actors/Level Objects/mushroom.tscn').instantiate();
+#3 for fire flower.
+	elif State.block_item == 3: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+	#4 for star.
+	elif State.block_item == 4: path = preload('res://Actors/Level Objects/fire_flower.tscn').instantiate();
+	#5 for 1up.
+	elif State.block_item == 5: path = preload('res://Actors/Level Objects/1up.tscn').instantiate();
+	#Creates an item node that's a child of the main level.
+	get_parent().add_child(path);
+				
+	var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
+	path.position = coord;
+	%ItemSound.play();
+	
