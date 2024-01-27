@@ -1,9 +1,9 @@
-[gd_scene load_steps=50 format=3 uid="uid://brpnuk26s7usk"]
+[gd_scene load_steps=53 format=3 uid="uid://brpnuk26s7usk"]
 
-[ext_resource type="Script" path="res://Actors/player.gd" id="1_nb1jr"]
+[ext_resource type="Script" path="res://Actors/Player/player.gd" id="1_nb1jr"]
 [ext_resource type="Texture2D" uid="uid://bnmjla5xx5o14" path="res://Sprites/Mario/die.png" id="2_2mxyc"]
 [ext_resource type="Texture2D" uid="uid://c2vo86gq72gu6" path="res://Sprites/Mario/Small/idle.png" id="3_57mye"]
-[ext_resource type="Script" path="res://Actors/player_camera.gd" id="3_kv74t"]
+[ext_resource type="Script" path="res://Actors/Player/player_camera.gd" id="3_kv74t"]
 [ext_resource type="Texture2D" uid="uid://clseqfs6lcj64" path="res://Sprites/Mario/Small/jump.png" id="4_qq2ta"]
 [ext_resource type="Texture2D" uid="uid://cps8gbma85jc8" path="res://Sprites/Mario/Small/run.png" id="5_njtaa"]
 [ext_resource type="Texture2D" uid="uid://ht32e1hfvaje" path="res://Sprites/Mario/Small/turn.png" id="8_7gu1f"]
@@ -22,10 +22,22 @@
 [ext_resource type="AudioStream" uid="uid://cqprk6ffnntgb" path="res://Sounds/sfx/Item.wav" id="18_3jn03"]
 [ext_resource type="AudioStream" uid="uid://cwrdvutyajf04" path="res://Sounds/sfx/Powerup.wav" id="18_h33na"]
 [ext_resource type="Texture2D" uid="uid://cm2a4pa8bqssf" path="res://Sprites/Mario/Fire/vine.png" id="18_pyt6m"]
+[ext_resource type="Shape2D" uid="uid://cenuak4gjcwq8" path="res://Actors/Player/small_hitbox.tres" id="19_2ixeq"]
 [ext_resource type="AudioStream" uid="uid://qrtp86tegcx8" path="res://Sounds/sfx/Break.wav" id="19_21lx7"]
 [ext_resource type="AudioStream" uid="uid://b0yebfvb3auvf" path="res://Sounds/sfx/1up.wav" id="19_wdwca"]
 [ext_resource type="AudioStream" uid="uid://kw6dgw2sccoj" path="res://Sounds/sfx/Bump.wav" id="20_r3y5j"]
 [ext_resource type="AudioStream" uid="uid://cn7u4vghy2boo" path="res://Sounds/sfx/Coin.wav" id="21_8n2fa"]
+[ext_resource type="Shape2D" uid="uid://b0cei6tshf144" path="res://Actors/Player/big_hitbox.tres" id="28_yxd6y"]
+[ext_resource type="Shape2D" uid="uid://cpeaeintrk81c" path="res://Actors/Player/crouch_hitbox.tres" id="29_h400n"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kd14f"]
+size = Vector2(12, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5jrja"]
+size = Vector2(12, 12)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4j3ku"]
+size = Vector2(20, 256)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_s1rn1"]
 atlas = ExtResource("5_njtaa")
@@ -276,19 +288,44 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qgnw0"]
-size = Vector2(10, 12)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_kd14f"]
-size = Vector2(12, 24)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5jrja"]
-size = Vector2(12, 12)
-
 [node name="Player" type="CharacterBody2D"]
 scale = Vector2(9, 9)
 collision_mask = 2
 script = ExtResource("1_nb1jr")
+
+[node name="SmallHitbox" type="CollisionShape2D" parent="."]
+unique_name_in_owner = true
+visible = false
+position = Vector2(0, 2)
+shape = ExtResource("19_2ixeq")
+debug_color = Color(1, 0.0941176, 0.101961, 0.419608)
+
+[node name="BigHitbox" type="CollisionShape2D" parent="."]
+unique_name_in_owner = true
+visible = false
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_kd14f")
+debug_color = Color(0.686275, 0.654902, 0.113725, 0.419608)
+
+[node name="CrouchHitBox" type="CollisionShape2D" parent="."]
+unique_name_in_owner = true
+visible = false
+position = Vector2(0, 2)
+shape = SubResource("RectangleShape2D_5jrja")
+debug_color = Color(1, 0.419608, 0.803922, 0.419608)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+offset = Vector2(0, -800)
+zoom = Vector2(0.3, 0.3)
+script = ExtResource("3_kv74t")
+
+[node name="CameraWall" type="StaticBody2D" parent="Camera2D"]
+unique_name_in_owner = true
+collision_layer = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Camera2D/CameraWall"]
+position = Vector2(226, -112)
+shape = SubResource("RectangleShape2D_4j3ku")
 
 [node name="Sprites" type="Node2D" parent="."]
 
@@ -310,29 +347,6 @@ visible = false
 position = Vector2(0, -8)
 sprite_frames = SubResource("SpriteFrames_ka6dg")
 animation = &"idle"
-
-[node name="SmallHitbox" type="CollisionShape2D" parent="."]
-unique_name_in_owner = true
-position = Vector2(0, 2)
-shape = SubResource("RectangleShape2D_qgnw0")
-debug_color = Color(1, 0.0941176, 0.101961, 0.419608)
-
-[node name="BigHitbox" type="CollisionShape2D" parent="."]
-unique_name_in_owner = true
-position = Vector2(0, -4)
-shape = SubResource("RectangleShape2D_kd14f")
-debug_color = Color(0.686275, 0.654902, 0.113725, 0.419608)
-
-[node name="CrouchHitBox" type="CollisionShape2D" parent="."]
-unique_name_in_owner = true
-position = Vector2(0, 2)
-shape = SubResource("RectangleShape2D_5jrja")
-debug_color = Color(1, 0.419608, 0.803922, 0.419608)
-
-[node name="Camera2D" type="Camera2D" parent="."]
-offset = Vector2(0, -800)
-zoom = Vector2(0.3, 0.3)
-script = ExtResource("3_kv74t")
 
 [node name="Sounds" type="Node2D" parent="."]
 
@@ -364,4 +378,35 @@ stream = ExtResource("18_3jn03")
 unique_name_in_owner = true
 stream = ExtResource("19_wdwca")
 
-[node name="Music" type="Node2D" parent="."]
+[node name="Area2Ds" type="Node2D" parent="."]
+
+[node name="SmallItemHitbox" type="Area2D" parent="Area2Ds"]
+collision_layer = 16
+collision_mask = 32
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2Ds/SmallItemHitbox"]
+position = Vector2(0, 1.5)
+shape = ExtResource("19_2ixeq")
+
+[node name="BigItemHitbox" type="Area2D" parent="Area2Ds"]
+collision_layer = 16
+collision_mask = 32
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2Ds/BigItemHitbox"]
+position = Vector2(0, -4.5)
+shape = ExtResource("28_yxd6y")
+
+[node name="CrouchItemHitbox" type="Area2D" parent="Area2Ds"]
+collision_layer = 16
+collision_mask = 32
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2Ds/CrouchItemHitbox"]
+position = Vector2(0, 1.55556)
+shape = ExtResource("29_h400n")
+
+[connection signal="body_entered" from="Area2Ds/SmallItemHitbox" to="." method="_on_small_item_hitbox_body_entered"]
+[connection signal="body_exited" from="Area2Ds/SmallItemHitbox" to="." method="_on_small_item_hitbox_body_exited"]
+[connection signal="body_entered" from="Area2Ds/BigItemHitbox" to="." method="_on_big_item_hitbox_body_entered"]
+[connection signal="body_exited" from="Area2Ds/BigItemHitbox" to="." method="_on_big_item_hitbox_body_exited"]
+[connection signal="body_entered" from="Area2Ds/CrouchItemHitbox" to="." method="_on_crouch_item_hitbox_body_entered"]
+[connection signal="body_exited" from="Area2Ds/CrouchItemHitbox" to="." method="_on_crouch_item_hitbox_body_exited"]

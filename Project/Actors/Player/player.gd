@@ -66,6 +66,7 @@ var State = {
 	#The speed you were traveling at when you jump, updated every frame when you're on the ground, otherwise is kept the same.
 	jump_speed = 0,
 	jump_height = 0,
+	block_position = Vector2(0, 0)
 }
 
 #Variables related to the player's sprite.
@@ -90,6 +91,7 @@ var Tile_Collision = {
 	tile_map = null,
 	#The coordinates of the cell that the player hit.
 	cell = Vector2(0, 0),
+	block_cell = Vector2(0, 0),
 	data = null,
 	#This kind of doesn't belong here, but upon colliding with a block item the block item will save it's ID in the player node so the player node can send it the block they collidied with.
 	block_item = null,
@@ -235,6 +237,7 @@ func _physics_process(delta):
 	if Counters.run_stop > 0 && !rinput:
 		Counters.run_stop -= 1;
 		
+	#Checks if the player hit a ceiling.
 	if is_on_ceiling():
 		#Gets the tile map from the last slide collision.
 		Tile_Collision.tile_map = get_slide_collision(get_slide_collision_count() - 1).get_collider();
@@ -245,9 +248,9 @@ func _physics_process(delta):
 		if State.power == 0:
 			#Get the cell of the block to hit.
 			#Checks the blocks to the left and right to the player so they can hit "edges" without it not doing anything.
-			check_adjacent_blocks(16);
+			Tile_Collision.cell = check_adjacent_blocks(16, Tile_Collision.tile_map);
 		else:
-			check_adjacent_blocks(32);
+			Tile_Collision.cell = check_adjacent_blocks(32, Tile_Collision.tile_map);
 		#Gets the data at the tile right above the player.
 		Tile_Collision.data = Tile_Collision.tile_map.get_cell_tile_data(0, Tile_Collision.cell)
 		var palette = 0
@@ -260,10 +263,11 @@ func _physics_process(delta):
 			State.block_type = 0;
 		#If the player hits a questionmark block.
 		if State.block_type == 1 && Tile_Collision.tile_map.name == "Blocks":
-			if State.block_item == 0: 
+			if State.block_item == 0 || Tile_Collision.cell.x != Tile_Collision.block_cell.x: 
 				%CoinSound.play();
 				State.coin += 1;
-			else: 
+			#Checks if the tile you're getting the item from is the same as the actual ? block.
+			elif Tile_Collision.cell.x == Tile_Collision.block_cell.x: 
 				#Spawns an item.
 				spawn_item();
 			
@@ -272,14 +276,14 @@ func _physics_process(delta):
 		#Brick blocks.
 		elif State.block_type == 1 && Tile_Collision.tile_map.name == 'Tiles':
 			#If it's a normal brick block.
-			if State.block_item == 0:
+			if State.block_item == 0 || Tile_Collision.cell.x != Tile_Collision.block_cell.x:
 				#If the player isn't small and hits a brick block, destroy it.
 				if State.power > 0:
 					Tile_Collision.tile_map.erase_cell(0, Tile_Collision.cell);
 					%BreakSound.play();
 				else: %BumpSound.play();
 			#If it is a brick block with an item.
-			else:
+			elif Tile_Collision.cell.x == Tile_Collision.block_cell.x:
 				spawn_item();
 				#Sets the tile to an empty block.
 				Tile_Collision.tile_map.set_cell(0, Tile_Collision.cell, Tile_Collision.tile_map.tile_set.get_source_id(0), Vector2(8, palette), 0)
@@ -361,9 +365,8 @@ func _physics_process(delta):
 	move_and_slide()
 
 
-func check_adjacent_blocks(height) -> void:
-	var cell = Tile_Collision.cell
-	var tile_map = Tile_Collision.tile_map;
+func check_adjacent_blocks(height, tile_map) -> Vector2i:
+	var cell = Vector2i(0, 0)
 	var check = -1;
 	
 	#Defaults the cell to right above you.
@@ -383,9 +386,7 @@ func check_adjacent_blocks(height) -> void:
 			#Otherwise use the cell on the right.
 			cell = tile_map.local_to_map(Vector2i(position.x/9 + 16, position.y/9 - height));
 			
-
-	Tile_Collision.cell = cell;
-	Tile_Collision.tile_map = tile_map;
+	return cell;
 	
 func spawn_item() -> void:
 	#Default the item to a mushroom.
@@ -406,7 +407,53 @@ func spawn_item() -> void:
 	#Creates an item node that's a child of the main level.
 	get_parent().add_child(path);
 				
-	var coord = Vector2(State.block.position.x, State.block.position.y - 16*9);
+	var coord = Vector2(State.block_position.x + 8*9, State.block_position.y);
 	path.position = coord;
+	print(State.block_position)
 	%ItemSound.play();
 	
+
+#Item hitboxes are used to detect collisions with the block item tile layer, setting the item that the player should recieve out of the next ? block.
+func _on_small_item_hitbox_body_entered(body):
+	if State.power == 0:
+		var cell = check_adjacent_blocks(16, body);
+		var data = body.get_cell_tile_data(0, cell)
+		if data:
+			State.block_item = data.get_custom_data("Type");
+			State.block_position = Vector2(cell.x, cell.y)*16*9;
+			Tile_Collision.block_cell = cell;
+			
+
+func _on_big_item_hitbox_body_entered(body):
+	if State.power > 0 && State.IsCrouching == false:
+		var cell = check_adjacent_blocks(32, body);
+		var data = body.get_cell_tile_data(0, cell)
+		if data:
+			State.block_item = data.get_custom_data("Type");
+			State.block_position = Vector2(cell.x, cell.y)*16*9;
+			Tile_Collision.block_cell = cell;
+
+
+func _on_crouch_item_hitbox_body_entered(body):
+	if State.power > 0 && State.IsCrouching == true:
+		var cell = check_adjacent_blocks(16, body);
+		var data = body.get_cell_tile_data(0, cell)
+		if data:
+			State.block_item = data.get_custom_data("Type");
+			State.block_position = Vector2(cell.x, cell.y)*16*9;
+			Tile_Collision.block_cell = cell;
+
+
+func _on_small_item_hitbox_body_exited(body):
+	if State.power == 0:
+		State.block_item = 0;
+
+
+func _on_big_item_hitbox_body_exited(body):
+	if State.power > 0 && State.IsCrouching == false:
+		State.block_item = 0;
+
+
+func _on_crouch_item_hitbox_body_exited(body):
+	if State.power > 0 && State.IsCrouching == true:
+		State.block_item = 0;
