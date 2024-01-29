@@ -37,7 +37,7 @@ size = Vector2(12, 24)
 size = Vector2(12, 12)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_4j3ku"]
-size = Vector2(20, 256)
+size = Vector2(16, 260)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_s1rn1"]
 atlas = ExtResource("5_njtaa")
@@ -290,7 +290,7 @@ animations = [{
 
 [node name="Player" type="CharacterBody2D"]
 scale = Vector2(9, 9)
-collision_mask = 2
+collision_mask = 66
 script = ExtResource("1_nb1jr")
 
 [node name="SmallHitbox" type="CollisionShape2D" parent="."]
@@ -321,10 +321,10 @@ script = ExtResource("3_kv74t")
 
 [node name="CameraWall" type="StaticBody2D" parent="Camera2D"]
 unique_name_in_owner = true
-collision_layer = 2
+collision_layer = 64
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Camera2D/CameraWall"]
-position = Vector2(226, -112)
+position = Vector2(-224, -121)
 shape = SubResource("RectangleShape2D_4j3ku")
 
 [node name="Sprites" type="Node2D" parent="."]

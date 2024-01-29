@@ -18,5 +18,3 @@ func _process(delta):
 	#This is fucking stupid but, to make it so the player can't pass the left of a screen, have a static body that is to the left of the screen with the world collision layer.
 	%CameraWall.global_position.x = get_screen_center_position().x;
 	old_parent = parent;
-	print(Vector2(global_position.x - limit_left, global_position.y))
-	print(Vector2(get_parent().global_position.x - limit_left, get_parent().global_position.y));
